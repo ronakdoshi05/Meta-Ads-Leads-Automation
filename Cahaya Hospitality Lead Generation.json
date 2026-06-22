@@ -1,0 +1,1074 @@
+{
+  "name": "Cahaya Hospitality Lead Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const leads = $json.data || [];\n\n// Sort oldest -> newest\nleads.sort((a, b) => {\n  return new Date(a.created_time) - new Date(b.created_time);\n});\n\nreturn leads.map((lead) => {\n\n  const fields = lead.field_data || [];\n\n  const getValue = (fieldName) => {\n    const field = fields.find(f => f.name === fieldName);\n    return field?.values?.[0] || \"\";\n  };\n\n  // Evolution API format = 91XXXXXXXXXX\n  const formatPhone = (phone) => {\n\n    if (!phone) return \"\";\n\n    const cleaned = phone.toString().replace(/\\D/g, \"\");\n\n    // 10 digit Indian number\n    if (cleaned.length === 10) {\n      return `91${cleaned}`;\n    }\n\n    // Already has 91 prefix\n    if (cleaned.length === 12 && cleaned.startsWith(\"91\")) {\n      return cleaned;\n    }\n\n    return cleaned;\n  };\n\n  const createdDate = new Date(lead.created_time);\n\n  const leadCreationDate = createdDate.toLocaleDateString(\"en-GB\");\n\n  // Follow-up Date (+2 days)\n  const followUp = new Date(createdDate);\n  followUp.setDate(followUp.getDate() + 2);\n\n  const followUpDate = followUp.toLocaleDateString(\"en-GB\");\n\n  return {\n    json: {\n\n      \"Lead ID\": String(lead.id),\n\n      \"Full Name\": getValue(\"full_name\"),\n\n      \"Contact\": formatPhone(\n        getValue(\"phone\")\n      ),\n\n      \"City\": getValue(\"city\"),\n\n      \"Check-in Date\": getValue(\"what_is_your_check-in_date?_(e.g._20_jun)\"),\n\n      \"Lead Creation Date\": leadCreationDate,\n\n      \"Follow-up Date\": followUpDate\n\n    }\n  };\n\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        16
+      ],
+      "id": "d8b57d06-1c54-45b0-a05a-89f98f5e29ef",
+      "name": "Data Cleaning"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1312,
+        240
+      ],
+      "id": "afc55da6-7739-4fcf-9ab0-ef997b24f481",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2304,
+        256
+      ],
+      "id": "5f7a00b4-fe28-4451-9ed2-217ade60f4b8",
+      "name": "Wait",
+      "webhookId": "197d2d0e-e125-4117-a64c-d87b44bc268f"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "cs-cst-evolution-api-2a1051ef",
+        "remoteJid": "={{ $json.Contact }}@s.whatsapp.net",
+        "messageText": "Hi! 👋 Thanks for reaching out about our Cahaya Villa Mandvi!\n\nHere’s a quick overview:\n🏡 4 BHK Private Villa\n · Opposite Serena Beach Resort\n🛁 Private Jacuzzi \n· 🎥 Home Theater \n·  Breakfast Included\n👥 Up to 8 Adults (16 with kids)\n\nTo check your dates, please share:\n1️⃣ Check-in & Check-out dates\n2️⃣ Number of guests\n3️⃣ Occasion (if any — birthday, reunion, etc.)\n\nWe’ll confirm availability within the hour! 🙌",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        256
+      ],
+      "id": "35dfc207-df6a-4e58-893c-ea0e4d98a0e3",
+      "name": "Send Message",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "evolutionApi": {
+          "id": "FZi7UEeuRa1rmgop",
+          "name": "Evolution account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "operation": "send-document",
+        "instanceName": "cs-cst-evolution-api-2a1051ef",
+        "remoteJid": "={{ $json.data.key.remoteJid }}",
+        "media": "https://drive.google.com/uc?export=download&id=1JoHKOABl02F2qNIERAiYF907xPyXVLAu",
+        "fileName": "Cahaya Beach House Mandvi 4BHK Holiday Villa.pdf",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        144
+      ],
+      "id": "e8ddc4b8-9a2b-454c-83da-20be29b03155",
+      "name": "Send Villa Brochure",
+      "executeOnce": true,
+      "credentials": {
+        "evolutionApi": {
+          "id": "FZi7UEeuRa1rmgop",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ZGvTywrl7OZb0iBKsgUKVKwjQYk7b8PkXK-flKQ31nc/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Daily Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZGvTywrl7OZb0iBKsgUKVKwjQYk7b8PkXK-flKQ31nc/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        256
+      ],
+      "id": "a8bc5689-7181-478b-9226-f5e90377102a",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5PNDat5dL0dyrkT4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const leadIds = $input.all().map(item => item.json[\"Lead ID\"]);\n\nreturn [\n  {\n    json: {\n      leadIds\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        256
+      ],
+      "id": "15f310ef-f835-4102-8f3c-90b95240b7b8",
+      "name": "List of Lead IDs"
+    },
+    {
+      "parameters": {
+        "url": "https://graph.facebook.com/v25.0/2065110287716574/leads",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "EAAWGOIKD0bYBRmHhV8iLQcGNr37a4PAzQkWTbIA3EuZAYlFmCN3GnMmbwZAFKA1GpCTFkSZCVDU1kpZArlbnZBXrH9VidXxcQdaT7HgglTF52KBi0ZA8LfmsK8j6JcA4wCI6o1uXJZBk89RmBSFCcJfkvSMm7pJ3aDm8YK4mFAlBcRvdGYfZBZBIObovQgaErmBEtXAZDZD"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        16
+      ],
+      "id": "7de15f78-6eda-4d8d-9944-5a93d78a2bbe",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const existingLeadIds = $('List of Lead IDs')\n  .first()\n  .json\n  .leadIds || [];\n\nreturn $input\n  .all()\n  .filter(item => item.json[\"Lead ID\"]) // Ignore helper object\n  .map(item => {\n\n    const leadId = String(item.json[\"Lead ID\"]);\n\n    return {\n      json: {\n        ...item.json,\n        alreadyExists: existingLeadIds.includes(leadId)\n      }\n    };\n\n  });"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        144
+      ],
+      "id": "fb2457dd-6e6a-49c7-bc52-68885427c4f6",
+      "name": "Check Duplicate Code"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d6d38e03-935a-4e84-b71b-9e80d5c8666b",
+              "leftValue": "={{ $json.alreadyExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        864,
+        144
+      ],
+      "id": "c084dafa-213c-4c46-bf1a-6e210fbdbb1c",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        48
+      ],
+      "id": "984a5e3b-afd5-44ad-8d0c-9ecb721a6519",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        464,
+        144
+      ],
+      "id": "dcf6c182-e5e6-4b3a-8114-4556616dcdd3",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ZGvTywrl7OZb0iBKsgUKVKwjQYk7b8PkXK-flKQ31nc/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Daily Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZGvTywrl7OZb0iBKsgUKVKwjQYk7b8PkXK-flKQ31nc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead ID": "={{ $json['Lead ID'] }}",
+            "Full Name": "={{ $json['Full Name'] }}",
+            "Contact": "={{ $json.Contact }}",
+            "City": "={{ $json.City }}",
+            "Check-in Date": "={{ $json['Check-in Date'] }}",
+            "Lead Created": "={{ $json['Lead Creation Date'] }}",
+            "Lead Called": "Not Called",
+            "Follow-up 1": "Yes",
+            "FU 1 Date": "={{ $json['Follow-up Date'] }}",
+            "WhatsApp Sent?": "Yes",
+            "WhatsApp FU 2": "Pending"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contact",
+              "displayName": "Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Check-in Date",
+              "displayName": "Check-in Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Created",
+              "displayName": "Lead Created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Called",
+              "displayName": "Lead Called",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "WhatsApp Sent?",
+              "displayName": "WhatsApp Sent?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow-up 1",
+              "displayName": "Follow-up 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "FU 1 Date",
+              "displayName": "FU 1 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "WhatsApp FU 1",
+              "displayName": "WhatsApp FU 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Follow-up Call",
+              "displayName": "Lead Follow-up Call",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow-up 2",
+              "displayName": "Follow-up 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "FU 2 Date",
+              "displayName": "FU 2 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "WhatsApp FU 2",
+              "displayName": "WhatsApp FU 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1088,
+        240
+      ],
+      "id": "7d73281e-1866-4e48-a6e8-f4fa2f3e60aa",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5PNDat5dL0dyrkT4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Whenever you create a new form, please note the Form ID of that form and put it in the Google Sheet > Form Ids sheet.\n\nThis will help us to find leads for that particular form easily without getting stuck inside the Meta maze\n\nTo obtain Form Id of a particular form :\n\n1. Go to meta business suite instant forms URL : business.facebook.com\n\n2. Search instant forms inside search bar located at bottom of the left menu\n\n3. Once you get to Instant Forms page you'll see all the forms you've created till date and clicking on them will give you the details of that form.\n\n4. Just click on the Form ID and paste it into the Forms ID spreadsheet\n\n",
+        "height": 336,
+        "width": 592
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "e681d64d-a207-463e-8801-8b0a068e51a3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -272,
+        128
+      ],
+      "id": "297bb9fa-55b4-4820-bffc-c0cbba370cd5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ZGvTywrl7OZb0iBKsgUKVKwjQYk7b8PkXK-flKQ31nc/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Daily Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZGvTywrl7OZb0iBKsgUKVKwjQYk7b8PkXK-flKQ31nc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead ID": "={{ $('Loop Over Items').item.json['Lead ID'] }}",
+            "WhatsApp Sent?": "Yes",
+            "WhatsApp FU 1": "Pending",
+            "WhatsApp FU 2": "Pending"
+          },
+          "matchingColumns": [
+            "Lead ID"
+          ],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact",
+              "displayName": "Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Check-in Date",
+              "displayName": "Check-in Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Created",
+              "displayName": "Lead Created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Called",
+              "displayName": "Lead Called",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WhatsApp Sent?",
+              "displayName": "WhatsApp Sent?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up 1",
+              "displayName": "Follow-up 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FU 1 Date",
+              "displayName": "FU 1 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WhatsApp FU 1",
+              "displayName": "WhatsApp FU 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Follow-up Call",
+              "displayName": "Lead Follow-up Call",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up 2",
+              "displayName": "Follow-up 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FU 2 Date",
+              "displayName": "FU 2 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WhatsApp FU 2",
+              "displayName": "WhatsApp FU 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2000,
+        144
+      ],
+      "id": "00fa84b9-bab9-453e-bd38-0044d7216d52",
+      "name": "WhatsApp Sent",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5PNDat5dL0dyrkT4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ZGvTywrl7OZb0iBKsgUKVKwjQYk7b8PkXK-flKQ31nc/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Daily Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZGvTywrl7OZb0iBKsgUKVKwjQYk7b8PkXK-flKQ31nc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead ID": "={{ $('Loop Over Items').item.json['Lead ID'] }}",
+            "WhatsApp Sent?": "Doesn't Exist",
+            "WhatsApp FU 1": "Doesn't Exist",
+            "WhatsApp FU 2": "Doesn't Exist"
+          },
+          "matchingColumns": [
+            "Lead ID"
+          ],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact",
+              "displayName": "Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Check-in Date",
+              "displayName": "Check-in Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Created",
+              "displayName": "Lead Created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Called",
+              "displayName": "Lead Called",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WhatsApp Sent?",
+              "displayName": "WhatsApp Sent?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up 1",
+              "displayName": "Follow-up 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FU 1 Date",
+              "displayName": "FU 1 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WhatsApp FU 1",
+              "displayName": "WhatsApp FU 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Follow-up Call",
+              "displayName": "Lead Follow-up Call",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up 2",
+              "displayName": "Follow-up 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FU 2 Date",
+              "displayName": "FU 2 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WhatsApp FU 2",
+              "displayName": "WhatsApp FU 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1888,
+        368
+      ],
+      "id": "5f8ff739-3a33-4393-a466-81932d34bc4a",
+      "name": "WhatsApp Doesn't Exist",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5PNDat5dL0dyrkT4",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Schedule Trigger": [
+      {
+        "json": {
+          "timestamp": "2026-06-19T18:55:03.142+05:30",
+          "Readable date": "June 19th 2026, 6:55:03 pm",
+          "Readable time": "6:55:03 pm",
+          "Day of week": "Friday",
+          "Year": "2026",
+          "Month": "June",
+          "Day of month": "19",
+          "Hour": "18",
+          "Minute": "55",
+          "Second": "03",
+          "Timezone": "Asia/Kolkata (UTC+05:30)"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Data Cleaning": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Message": {
+      "main": [
+        [
+          {
+            "node": "Send Villa Brochure",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp Doesn't Exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Villa Brochure": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "List of Lead IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List of Lead IDs": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Data Cleaning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Sent": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Doesn't Exist": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "47b8af6c-bb8f-4a99-87a3-7a4f266ed9a0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "df83074dbe97ad6c72560a7deb6b064fc09933005a91b4563f6d50e2c640906f"
+  },
+  "nodeGroups": [],
+  "id": "K7VctFx08MYNzKFE",
+  "tags": []
+}

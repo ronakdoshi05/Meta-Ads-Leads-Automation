@@ -1,0 +1,410 @@
+{
+  "name": "Cahaya Hospitality Follow-up 2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        272,
+        -48
+      ],
+      "id": "68bc00dc-c7b4-407c-804f-8b04531fcd7c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Aqb3gNN6ibV3tc32oh8JpcrraIYDt0b2MmbzZY2mwoQ",
+          "mode": "list",
+          "cachedResultName": "All n8n projects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Aqb3gNN6ibV3tc32oh8JpcrraIYDt0b2MmbzZY2mwoQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1559035589,
+          "mode": "list",
+          "cachedResultName": "Cahaya Hospitality",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Aqb3gNN6ibV3tc32oh8JpcrraIYDt0b2MmbzZY2mwoQ/edit#gid=1559035589"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "FU 2 Date",
+              "lookupValue": "={{ $json.today_full }}"
+            },
+            {
+              "lookupColumn": "WhatsApp FU 2",
+              "lookupValue": "Pending"
+            },
+            {
+              "lookupColumn": "Follow-up 2",
+              "lookupValue": "Yes"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "0f7e71a1-c219-4c9d-a3d1-cda1e8b3f1b2",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "d8mCWrQ0aId2cCFg",
+          "name": "doshironak56@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\n\n// Format 1 → DD-M-YY (28-4-26)\nfunction formatShort(date) {\n  const dd = String(date.getDate()).padStart(2, '0');\n  const mm = date.getMonth() + 1; // no leading zero\n  const yy = String(date.getFullYear()).slice(-2);\n\n  return `${dd}-${mm}-${yy}`;\n}\n\n// Format 2 → DD/MM/YYYY (28/04/2026)\nfunction formatFull(date) {\n  const dd = String(date.getDate()).padStart(2, '0');\n  const mm = String(date.getMonth() + 1).padStart(2, '0');\n  const yyyy = date.getFullYear();\n\n  return `${dd}/${mm}/${yyyy}`;\n}\n\nreturn [\n  {\n    json: {\n      today_short: formatShort(today),   // 28-4-26\n      today_full: formatFull(today),     // 28/04/2026\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -48
+      ],
+      "id": "52d245da-ae30-42fd-be62-9ad824c24cef",
+      "name": "Get Date"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "RonakWhatsaApp",
+        "remoteJid": "={{ $json.Contact }}@s.whatsapp.net",
+        "messageText": "={{ $json['Full Name'] }}, just a heads up — we've had a couple of enquiries for the same dates you were looking at. 📅\nDidn't want to block it without checking with you first.\nIf you're still keen, just say the word and we'll sort it out.\n\nCahaya - Beach House Mandvi.",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        -32
+      ],
+      "id": "68777160-ebda-441d-b302-6ceb53095c3a",
+      "name": "Enviar texto"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Aqb3gNN6ibV3tc32oh8JpcrraIYDt0b2MmbzZY2mwoQ",
+          "mode": "list",
+          "cachedResultName": "All n8n projects",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Aqb3gNN6ibV3tc32oh8JpcrraIYDt0b2MmbzZY2mwoQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1559035589,
+          "mode": "list",
+          "cachedResultName": "Cahaya Hospitality",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Aqb3gNN6ibV3tc32oh8JpcrraIYDt0b2MmbzZY2mwoQ/edit#gid=1559035589"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead ID": "={{ $('Loop Over Items').item.json['Lead ID'] }}",
+            "WhatsApp FU 1": "",
+            "WhatsApp FU 2": "Sent"
+          },
+          "matchingColumns": [
+            "Lead ID"
+          ],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact",
+              "displayName": "Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Check-in Date",
+              "displayName": "Check-in Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Created",
+              "displayName": "Lead Created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Called",
+              "displayName": "Lead Called",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "WhatsApp Sent?",
+              "displayName": "WhatsApp Sent?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow-up 1",
+              "displayName": "Follow-up 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "FU 1 Date",
+              "displayName": "FU 1 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WhatsApp FU 1",
+              "displayName": "WhatsApp FU 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Follow-up Call",
+              "displayName": "Lead Follow-up Call",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow-up 2",
+              "displayName": "Follow-up 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "FU 2 Date",
+              "displayName": "FU 2 Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WhatsApp FU 2",
+              "displayName": "WhatsApp FU 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1376,
+        -32
+      ],
+      "id": "3dc1073a-1899-4659-aa32-f8d079ec8647",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "d8mCWrQ0aId2cCFg",
+          "name": "doshironak56@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        912,
+        -48
+      ],
+      "id": "667f48d2-32f5-4b7b-93cf-84987f527e3b",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1584,
+        -32
+      ],
+      "id": "20f15390-44d4-411f-8234-e5a1e64d4b62",
+      "name": "Wait",
+      "webhookId": "2128c289-0bba-46fc-9f90-f585a9b3be19"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Date": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar texto": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Enviar texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "4cfa0e56-b06c-44ae-acec-2eacc7406c61",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "693b8b5fd805e1dac9256f1f3f957dfcc86cb8a195ec0cbb89f4408641f618b6"
+  },
+  "nodeGroups": [],
+  "id": "NTPmiEBTzAonCAkr",
+  "tags": []
+}
